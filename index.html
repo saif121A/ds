@@ -298,45 +298,64 @@ function readImageFile(file){
 }
 
 // ===== حفظ منتج =====
-form.addEventListener('submit', async (e)=>{
+// تحميل المنتجات من الخادم بدلاً من localStorage
+function loadProductsFromServer() {
+  fetch('http://localhost:3000/products')
+    .then(res => res.json())
+    .then(data => {
+      products = data;
+      render();
+    })
+    .catch(err => console.error("فشل تحميل المنتجات:", err));
+}
+
+// حفظ منتج جديد على الخادم
+form.addEventListener('submit', async (e) => {
   e.preventDefault();
   saveBtn.disabled = true;
+
   let image = "";
   if(imageFileEl.files && imageFileEl.files[0]){
-    image = await readImageFile(imageFileEl.files[0]);
-  }else if(imageUrlEl.value.trim()){
+    const reader = new FileReader();
+    reader.onload = () => {
+      image = reader.result;
+      saveProduct();
+    };
+    reader.readAsDataURL(imageFileEl.files[0]);
+  } else {
     image = imageUrlEl.value.trim();
+    saveProduct();
   }
-  const item = {
-    title: titleEl.value.trim(),
-    price: Number(priceEl.value),
-    specs: specsEl.value.trim(),
-    tags: tagsEl.value.split(/,|،/).map(s=>s.trim()).filter(Boolean),
-    image
-  };
 
-  try{
-    if(editId){
-      await fetch(`${API_URL}/products/${editId}`, {
-        method:'PUT',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(item)
-      });
-    }else{
-      await fetch(`${API_URL}/products`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(item)
-      });
-    }
-    await loadProducts();
-    modal.close();
-  }catch(err){
-    console.error(err);
-    alert("فشل الحفظ");
+  function saveProduct() {
+    const item = {
+      title: titleEl.value.trim(),
+      price: Number(priceEl.value),
+      specs: specsEl.value.trim(),
+      tags: tagsEl.value.split(/,|،/).map(s=>s.trim()).filter(Boolean),
+      image
+    };
+
+    fetch('http://localhost:3000/products', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(item)
+    })
+    .then(res => res.json())
+    .then(data => {
+      products.unshift(data);
+      render();
+      modal.close();
+      saveBtn.disabled = false;
+    })
+    .catch(err => {
+      console.error("فشل الحفظ:", err);
+      alert("فشل الحفظ على الخادم!");
+      saveBtn.disabled = false;
+    });
   }
-  saveBtn.disabled = false;
 });
+
 
 // ===== حذف منتج =====
 async function deleteProduct(id){
