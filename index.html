@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>متجر بسيط</title>
+  <meta name="description" content="متجر بسيط لإضافة صور الشاشة والسعر والمواصفات مع زر شراء عبر واتساب.">
+  <style>
+    :root{
+      --bg:#0f172a;       /* slate-900 */
+      --card:#111827;     /* gray-900 */
+      --muted:#94a3b8;    /* slate-400 */
+      --text:#e5e7eb;     /* gray-200 */
+      --accent:#22c55e;   /* green-500 */
+      --accent-2:#3b82f6; /* blue-500 */
+      --danger:#ef4444;   /* red-500 */
+      --border: #1f2937;  /* gray-800 */
+      --shadow: 0 10px 30px rgba(0,0,0,.25);
+      --radius: 14px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:linear-gradient(160deg,#0b1224 0%,#0f172a 60%,#0b1224 100%);color:var(--text);font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Arabic", "Helvetica Neue", Arial, "Apple Color Emoji","Segoe UI Emoji";}
+    header{
+      position:sticky; top:0; z-index:10;
+      backdrop-filter: blur(10px);
+      background: rgba(15,23,42,.6);
+      border-bottom: 1px solid var(--border);
+    }
+    .wrap{max-width:1100px;margin:auto;padding:18px 16px;}
+    .bar{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    h1{font-size:22px;margin:0;font-weight:700;letter-spacing:.3px}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    button, .btn{
+      border:1px solid var(--border); background:#0b1224; color:var(--text);
+      padding:10px 14px; border-radius:10px; cursor:pointer; transition:.2s; text-decoration:none; display:inline-flex; align-items:center; gap:8px
+    }
+    button:hover, .btn:hover{transform: translateY(-1px); box-shadow: var(--shadow)}
+    .btn-primary{background:linear-gradient(135deg,var(--accent),#16a34a); border: none; color:white}
+    .btn-secondary{background:linear-gradient(135deg,var(--accent-2),#2563eb); border: none; color:white}
+    .btn-danger{background:linear-gradient(135deg,var(--danger),#b91c1c); border: none; color:white}
+    .grid{display:grid; grid-template-columns: repeat(auto-fill,minmax(240px,1fr)); gap:16px; padding:20px 16px}
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      overflow:hidden;
+      box-shadow: var(--shadow);
+      display:flex; flex-direction:column
+    }
+    .thumb{aspect-ratio: 1.2/1; background:#0b1224; display:block; width:100%; object-fit:cover}
+    .card-body{padding:14px; display:flex; flex-direction:column; gap:8px}
+    .title{font-weight:700; font-size:16px; line-height:1.3}
+    .price{font-weight:800; font-size:18px}
+    .muted{color:var(--muted); font-size:13px}
+    .specs{white-space:pre-wrap; font-size:14px; color:#d1d5db}
+    .actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap}
+    .footer{opacity:.7; font-size:12px; text-align:center; padding:24px 0}
+    dialog{
+      border:none; border-radius:16px; padding:0; width:min(720px,94vw); background:#0b1224; color:var(--text); box-shadow: var(--shadow); 
+    }
+    dialog::backdrop{ backdrop-filter: blur(6px); background: rgba(0,0,0,.35) }
+    .modal-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+    .modal-body{padding:16px; display:grid; gap:12px}
+    .field{display:grid; gap:6px}
+    label{font-size:13px; color:var(--muted)}
+    input[type="text"], input[type="number"], textarea{
+      background:#0a1222; color:var(--text); border:1px solid var(--border); border-radius:10px; padding:10px 12px; outline:none
+    }
+    textarea{min-height:110px; resize:vertical}
+    .two{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+    @media (max-width:700px){ .two{grid-template-columns:1fr}}
+    .img-preview{width:100%; border:1px dashed var(--border); border-radius:12px; padding:10px; display:grid; place-items:center; aspect-ratio: 16/10; overflow:hidden}
+    .img-preview img{max-width:100%; height:auto; object-fit:contain}
+    .badge{font-size:12px; background:#0a1222; border:1px solid var(--border); padding:3px 8px; border-radius:999px}
+    .empty{
+      margin: 28px auto; text-align:center; opacity:.8;
+      border:1px dashed var(--border); border-radius:16px; padding:30px
+    }
+    .help{font-size:12px; color:var(--muted)}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap bar">
+      <h1>متجري</h1>
+      <div class="controls">
+        <button class="btn-secondary" id="loginAdminBtn">تسجيل دخول المسؤول</button>
+        <button class="btn-secondary" id="addBtn">إضافة منتج</button>
+        <button class="btn" id="exportBtn">تصدير البيانات</button>
+        <label class="btn" for="importFile" style="cursor:pointer">استيراد بيانات</label>
+        <input id="importFile" type="file" accept="application/json" hidden>
+        <button class="btn-danger" id="clearBtn" title="حذف كل المنتجات">تفريغ الكل</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div id="productsGrid" class="grid"></div>
+    <div id="emptyState" class="empty" hidden>
+      لسه ما فيه منتجات. اضغط <span class="badge">إضافة منتج</span> وابدأ الحفظ 👍
+    </div>
+  </main>
+
+  <footer class="footer">
+    صنع بالحب — زر الشراء يفتح واتساب على <span class="badge">+968 9437 0488</span>
+  </footer>
+
+  <dialog id="productModal">
+    <form method="dialog" id="productForm">
+      <div class="modal-head">
+        <strong id="modalTitle">إضافة منتج</strong>
+        <button value="cancel" class="btn">إغلاق</button>
+      </div>
+      <div class="modal-body">
+        <div class="two">
+          <div class="field">
+            <label>اسم المنتج</label>
+            <input type="text" id="title" placeholder="مثال: شاشة سامسونج 27 بوصة" required>
+          </div>
+          <div class="field">
+            <label>السعر (ريال عُماني)</label>
+            <input type="number" id="price" placeholder="مثال: 129.9" step="0.001" min="0" required>
+          </div>
+        </div>
+
+        <div class="two">
+          <div class="field">
+            <label>رابط صورة (اختياري إذا راح ترفع ملف)</label>
+            <input type="text" id="imageUrl" placeholder="https://example.com/image.jpg">
+          </div>
+          <div class="field">
+            <label>رفع صورة من جهازك</label>
+            <input type="file" id="imageFile" accept="image/*">
+          </div>
+        </div>
+
+        <div class="two">
+          <div class="field">
+            <label>وصف/مواصفات</label>
+            <textarea id="specs" placeholder="المعالج، الرام، الدقة..."></textarea>
+          </div>
+          <div class="field">
+            <label>وسوم (اختياري)</label>
+            <input type="text" id="tags" placeholder="مثال: جديد، كرتون مفتوح">
+            <span class="help">افصل بين الوسوم بعلامة فاصلة عربية أو إنجليزية: ، ,</span>
+          </div>
+        </div>
+
+        <div class="img-preview" id="previewBox">
+          <span class="muted">معاينة الصورة تظهر هنا</span>
+        </div>
+
+        <div class="actions">
+          <button class="btn-primary" id="saveBtn" value="default">حفظ</button>
+          <button class="btn" id="resetBtn" type="button">تفريغ الحقول</button>
+          <span class="help">يتم الحفظ في جهازك (localStorage).</span>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <template id="cardTpl">
+    <div class="card">
+      <img class="thumb" alt="">
+      <div class="card-body">
+        <div class="title"></div>
+        <div class="muted"></div>
+        <div class="price"></div>
+        <div class="specs"></div>
+        <div class="actions">
+          <a class="btn-primary buy" target="_blank" rel="noopener">اشتري الآن</a>
+          <button class="btn edit">تعديل</button>
+          <button class="btn-danger del">حذف</button>
+        </div>
+      </div>
+    </div>
+  </template>
+
+<script>
+const API_URL = "http://localhost:3000"; // رابط سيرفر Node.js
+const WHATSAPP_NUMBER = "96894370488";
+
+const grid = document.getElementById('productsGrid');
+const emptyState = document.getElementById('emptyState');
+const tpl = document.getElementById('cardTpl');
+
+const modal = document.getElementById('productModal');
+const form = document.getElementById('productForm');
+const modalTitle = document.getElementById('modalTitle');
+const titleEl = document.getElementById('title');
+const priceEl = document.getElementById('price');
+const specsEl = document.getElementById('specs');
+const tagsEl = document.getElementById('tags');
+const imageUrlEl = document.getElementById('imageUrl');
+const imageFileEl = document.getElementById('imageFile');
+const preview = document.getElementById('previewBox');
+
+const addBtn = document.getElementById('addBtn');
+const clearBtn = document.getElementById('clearBtn');
+const saveBtn = document.getElementById('saveBtn');
+
+let products = [];
+let editIndex = null;
+let editId = null;
+let isAdmin = false;
+
+// ===== أدوات =====
+function currency(n){
+  try{ return new Intl.NumberFormat('ar-OM',{style:'currency',currency:'OMR'}).format(Number(n)); }
+  catch{ return Number(n).toFixed(3) + " ر.ع" }
+}
+function whatsappLink(p){
+  const msg = `السلام عليكم 👋\nأرغب بشراء المنتج التالي:\n• ${p.title}\n• السعر: ${p.price} ر.ع\nرابط الصورة: ${p.image ?? ""}\nهل متوفر؟`;
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
+}
+function updateControls(){
+  addBtn.style.display = isAdmin ? "inline-flex" : "none";
+  clearBtn.style.display = isAdmin ? "inline-flex" : "none";
+  document.querySelectorAll('.edit').forEach(btn => btn.style.display = isAdmin ? "inline-flex" : "none");
+  document.querySelectorAll('.del').forEach(btn => btn.style.display = isAdmin ? "inline-flex" : "none");
+}
+
+// ===== جلب البيانات من السيرفر =====
+async function loadProducts(){
+  try{
+    const res = await fetch(`${API_URL}/products`);
+    products = await res.json();
+    render();
+  }catch(e){
+    console.error(e);
+    alert("تعذر جلب المنتجات من السيرفر");
+  }
+}
+
+// ===== عرض المنتجات =====
+function render(){
+  grid.innerHTML = "";
+  if(!products.length){ emptyState.hidden = false; updateControls(); return; }
+  emptyState.hidden = true;
+  products.forEach((p,idx)=>{
+    const node = tpl.content.cloneNode(true);
+    const img = node.querySelector('.thumb');
+    const t = node.querySelector('.title');
+    const m = node.querySelector('.muted');
+    const pr = node.querySelector('.price');
+    const sp = node.querySelector('.specs');
+    const buy = node.querySelector('.buy');
+    const edit = node.querySelector('.edit');
+    const del = node.querySelector('.del');
+
+    img.src = p.image || "";
+    img.alt = p.title || "صورة المنتج";
+    t.textContent = p.title || "منتج";
+    m.textContent = (p.tags && p.tags.length) ? p.tags.split(',').map(x=>`#${x.trim()}`).join(' ') : "بدون وسوم";
+    pr.textContent = currency(p.price || 0);
+    sp.textContent = p.specs || "";
+    buy.href = whatsappLink(p);
+
+    edit.addEventListener('click', ()=> openEdit(idx));
+    del.addEventListener('click', ()=> deleteProduct(p.id));
+
+    grid.appendChild(node);
+  });
+  updateControls();
+}
+
+// ===== فتح النوافذ =====
+function openAdd(){
+  editIndex = null; editId = null;
+  modalTitle.textContent = "إضافة منتج";
+  form.reset();
+  preview.innerHTML = '<span class="muted">معاينة الصورة تظهر هنا</span>';
+  modal.showModal();
+}
+function openEdit(i){
+  editIndex = i;
+  const p = products[i];
+  editId = p.id;
+  modalTitle.textContent = "تعديل منتج";
+  titleEl.value = p.title || "";
+  priceEl.value = p.price || "";
+  specsEl.value = p.specs || "";
+  tagsEl.value = p.tags || "";
+  imageUrlEl.value = p.image || "";
+  preview.innerHTML = p.image ? `<img src="${p.image}" alt="preview">` : '<span class="muted">معاينة الصورة تظهر هنا</span>';
+  imageFileEl.value = "";
+  modal.showModal();
+}
+
+// ===== قراءة الصورة =====
+function readImageFile(file){
+  return new Promise((res,rej)=>{
+    const reader = new FileReader();
+    reader.onload = ()=> res(reader.result);
+    reader.onerror = rej;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ===== حفظ منتج =====
+form.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  saveBtn.disabled = true;
+  let image = "";
+  if(imageFileEl.files && imageFileEl.files[0]){
+    image = await readImageFile(imageFileEl.files[0]);
+  }else if(imageUrlEl.value.trim()){
+    image = imageUrlEl.value.trim();
+  }
+  const item = {
+    title: titleEl.value.trim(),
+    price: Number(priceEl.value),
+    specs: specsEl.value.trim(),
+    tags: tagsEl.value.split(/,|،/).map(s=>s.trim()).filter(Boolean),
+    image
+  };
+
+  try{
+    if(editId){
+      await fetch(`${API_URL}/products/${editId}`, {
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(item)
+      });
+    }else{
+      await fetch(`${API_URL}/products`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(item)
+      });
+    }
+    await loadProducts();
+    modal.close();
+  }catch(err){
+    console.error(err);
+    alert("فشل الحفظ");
+  }
+  saveBtn.disabled = false;
+});
+
+// ===== حذف منتج =====
+async function deleteProduct(id){
+  if(!confirm("متأكد من حذف المنتج؟")) return;
+  try{
+    await fetch(`${API_URL}/products/${id}`, {method:'DELETE'});
+    await loadProducts();
+  }catch(err){
+    console.error(err);
+    alert("فشل الحذف");
+  }
+}
+
+// ===== إدارة المسؤول =====
+document.getElementById('loginAdminBtn').addEventListener('click', ()=>{
+  const pass = prompt("ادخل كلمة السر للمسؤول:");
+  if(pass==="admin123"){ isAdmin=true; alert("تم الدخول كمسؤول ✅"); updateControls(); }
+  else alert("كلمة السر خاطئة!");
+});
+addBtn.addEventListener('click', ()=>{ if(isAdmin) openAdd(); });
+
+// أول تحميل
+loadProducts();
+</script>
