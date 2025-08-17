@@ -177,7 +177,7 @@
   </template>
 
 <script>
-const API_URL = "https://ds-huruorg90-saif2.vercel.app/api/products"; // رابط سيرفر Node.js
+const API_URL = "https://ds-a94zjjymt-saif2.vercel.app/api/products"; // رابط سيرفر Node.js
 const WHATSAPP_NUMBER = "96894370488";
 
 const grid = document.getElementById('productsGrid');
@@ -221,14 +221,16 @@ function updateControls(){
 }
 
 // ===== جلب البيانات من السيرفر =====
-async function loadProducts(){
-  try{
+async function loadProducts() {
+  try {
     const res = await fetch(API_URL);
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     products = await res.json();
-    render();
-  }catch(e){
-    console.error(e);
-    alert("تعذر جلب المنتجات من السيرفر");
+    console.log(products);
+    render(); // عرض المنتجات
+  } catch (e) {
+    console.error("خطأ جلب المنتجات:", e);
+    alert("تعذر جلب المنتجات من السيرفر: " + e.message);
   }
 }
 
