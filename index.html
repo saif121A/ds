@@ -177,7 +177,7 @@
   </template>
 
 <script>
-const API_URL = "http://localhost:3000"; // رابط سيرفر Node.js
+const API_URL = "https://ds-git-main-saif2.vercel.app/products"; // رابط سيرفر Node.js
 const WHATSAPP_NUMBER = "96894370488";
 
 const grid = document.getElementById('productsGrid');
@@ -223,7 +223,7 @@ function updateControls(){
 // ===== جلب البيانات من السيرفر =====
 async function loadProducts(){
   try{
-    const res = await fetch('https://ds-psi-seven.vercel.app/products');
+    const res = await fetch('https://ds-28c3yyi7t-saif2.vercel.app/');
     products = await res.json();
     render();
   }catch(e){
@@ -300,7 +300,7 @@ function readImageFile(file){
 // ===== حفظ منتج =====
 // تحميل المنتجات من الخادم بدلاً من localStorage
 function loadProductsFromServer() {
-  fetch('https://ds-psi-seven.vercel.app/products')
+  fetch('https://ds-28c3yyi7t-saif2.vercel.app/')
     .then(res => res.json())
     .then(data => {
       products = data;
@@ -336,7 +336,7 @@ form.addEventListener('submit', async (e) => {
       image
     };
 
-    fetch('https://ds-psi-seven.vercel.app/products', {
+    fetch('https://ds-28c3yyi7t-saif2.vercel.app/', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify(item)
@@ -361,7 +361,7 @@ form.addEventListener('submit', async (e) => {
 async function deleteProduct(id){
   if(!confirm("متأكد من حذف المنتج؟")) return;
   try{
-    await fetch('https://ds-psi-seven.vercel.app/products', {method:'DELETE'});
+    await fetch('https://ds-28c3yyi7t-saif2.vercel.app/', {method:'DELETE'});
     await loadProducts();
   }catch(err){
     console.error(err);
